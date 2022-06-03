@@ -11,7 +11,7 @@ const register = (req, res, next) => {
 		.then((user) => {
 			if (user.length >= 1) {
 				res.status(409).json({
-				message:"Email Exists"
+					message: "Email already exists"
 				})
 			} else {
 				bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -22,9 +22,8 @@ const register = (req, res, next) => {
 					} else {
 						const user = new User({
 							_id: new mongoose.Types.ObjectId(),
-							email: req.body.email,
+							...req.body,
 							password: hash,
-              				name: req.body.name,
 						});
 						user
 							.save()
@@ -33,10 +32,8 @@ const register = (req, res, next) => {
 									.save()
 									.then((result1) => {
 										res.status(201).json({
-											userDetails: {
-												id: result._id,
-												email: result.email,
-												name: result.name,
+											user: {
+												...result._doc
 											},
 										})
 									})
@@ -83,27 +80,23 @@ const login = (req, res, next) => {
 						{
               				id: user[0]._id,
 							email: user[0].email,
-							name: user[0].name,
 						},
 						process.env.jwtSecret,
 						{
-							expiresIn: "1d",
+							expiresIn: "1w",
 						}
           			);
 
 					return res.status(200).json({
-						message: "Auth successful",
 						user: {
-							id: user[0]._id,
-							name: user[0].name,
-							email: user[0].email
+							...user[0]._doc
 						},
 						token: token,
 					});
 				}
 
 				res.status(401).json({
-					message: "Auth failed",
+					message: "Incorrect password",
 				});
 			});
 		})
